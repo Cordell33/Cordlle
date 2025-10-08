@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>CORDLLE</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      background: white;
+      color: red;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 2rem;
+      min-height: 100vh;
+      margin: 0;
+    }
+    h1 { font-size: 2.5rem; margin-bottom: 1rem; color: red; }
+    .game-area {
+      display: flex;
+      align-items: flex-start;
+      gap: 2rem;
+      flex-wrap: wrap;
+      justify-content: center;
+      width: 100%;
+      max-width: 800px;
+    }
+    .questions { font-size: 1.2rem; min-width: 220px; display: flex; flex-direction: column; gap: 1rem; }
+    .question-container { display: flex; align-items: center; gap: 0.5rem; }
+    .question-text { background-color: #f5f5f5; border-left: 4px solid red; padding: 0.5rem; font-weight: bold; border-radius: 4px; flex-grow: 1; color: red; }
+    .question-result { font-size: 1.5rem; color: red; width: 30px; text-align: center; visibility: hidden; }
+    .guesses { display: flex; flex-direction: column; align-items: flex-start; width: 100%; max-width: 17rem; }
+    .row { display: flex; margin: 0.5rem 0; justify-content: flex-start; align-items: center; transition: transform 0.2s; }
+    .row.shake { animation: shake 0.3s; }
+    @keyframes shake { 0%{transform:translateX(0)}25%{transform:translateX(-5px)}50%{transform:translateX(5px)}75%{transform:translateX(-5px)}100%{transform:translateX(0)} }
+    .cell { width: 2.5rem; height: 2.5rem; font-size: 1.2rem; margin: 0.15rem; text-align: center; border: 2px solid #444; border-radius: 8px; background: #eee; color: red; text-transform: uppercase; }
+    .cell.green { background: green; color: white; border-color: green; }
+    .cell.yellow { background: goldenrod; color: white; border-color: goldenrod; }
+    .cell.gray { background: #ccc; color: white; border-color: #ccc; }
+    #game-over { margin-top: 1rem; font-size: 1.2rem; text-align: center; min-height: 2rem; }
+    #start-screen { position: fixed; top:0; left:0; right:0; bottom:0; background:white; color:red; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; padding:2rem; z-index:999; }
+    #start-button { margin-top: 1rem; padding: 0.5rem 1.5rem; font-size: 1.2rem; cursor: pointer; color: red; background: white; border: 2px solid red; border-radius: 5px; }
+    footer { margin-top: 2rem; color: red; font-weight: bold; }
+
+    /* ===== Slide Menu (off-canvas) ===== */
+    #menu-toggle { position: fixed; top: 1rem; left: 1rem; z-index: 1100; background: #00bcd4; color: #121212; border: none; border-radius: 999px; padding: 0.55rem 1.1rem; font-size: 1.1rem; font-weight: 700; cursor: pointer; box-shadow: 0 4px 12px rgba(0,0,0,0.4); transition: background 0.2s ease, transform 0.2s ease; }
+    #menu-toggle:hover { background:#00a0b7; transform: translateY(-1px); }
+    body.menu-open #menu-toggle { background:#0097a7; color:#fff; }
+    #menu-backdrop { position: fixed; inset:0; background: rgba(0,0,0,0.6); opacity:0; pointer-events:none; transition: opacity 0.3s ease; z-index:1000; }
+    body.menu-open #menu-backdrop { opacity:1; pointer-events:auto; }
+    #side-menu { position:fixed; top:0; left:0; height:100vh; width:min(320px,85vw); background:#fdfdfd; box-shadow:8px 0 24px rgba(0,0,0,0.25); transform: translateX(-100%); transition: transform 0.3s ease; z-index:1050; padding:1.5rem 1.75rem 2rem; display:flex; flex-direction:column; gap:1.5rem; overflow-y:auto; }
+    body.menu-open #side-menu { transform: translateX(0); }
+    #side-menu h2 { margin:0; color:#00bcd4; font-size:1.5rem; text-shadow:0 0 6px rgba(0,188,212,0.2); }
+    #side-menu p { margin:0; color:#333; line-height:1.4; }
+    .login-panel { margin-top:1.5rem; background: rgba(0,0,0,0.03); padding:1rem 1.5rem; border-radius:12px; max-width:420px; width:100%; box-shadow: 0 8px 16px rgba(0,0,0,0.08); border: 1px solid #e5e5e5; }
+    .login-panel label { display:block; font-weight:600; margin-bottom:0.5rem; }
+    .login-row { display:flex; gap:0.5rem; }
+    .login-panel input[type="text"] { flex:1; padding:0.6rem 0.8rem; border-radius:8px; border:1px solid #ccc; background:#fff; color:#111; font-size:1rem; }
+    .login-panel input[type="text"]:focus { outline:none; border-color:#00bcd4; box-shadow:0 0 0 3px rgba(0,188,212,0.2); }
+    .login-panel button { padding:0.6rem 1.2rem; border-radius:8px; border:none; background:#00bcd4; color:#fff; font-weight:600; cursor:pointer; transition: background 0.2s ease; }
+    .login-panel button:hover { background:#0097a7; }
+    .login-panel .external-link { margin-top:0.75rem; display:inline-block; color:#00bcd4; font-weight:600; text-decoration:none; transition: color 0.2s ease; }
+    .login-panel .external-link:hover { color:#ff9800; text-decoration: underline; }
+    #logout-button { margin-top:0.75rem; width:100%; background:#ef5350; }
+    #logout-button:hover { background:#e53935; }
+    .login-hint { margin-top:0.75rem; font-size:0.9rem; color:#666; }
+    .streak-panel { margin-top:6px; padding:10px 12px; border-radius:10px; background:#fafafa; border:1px solid #e5e5e5; box-shadow: inset 0 0 0 1px rgba(255,59,59,0.06); }
+    .streak-panel h3 { margin:0 0 8px; font-size:1.05rem; color:#c0392b; }
+    .streak-row { display:flex; align-items:baseline; gap:8px; font-weight:700; }
+    #streak-count { font-size:1.6rem; color:#555; }
+    .streak-note { display:block; margin-top:6px; color:#777; font-size:.85rem; }
+    .auth-status { color:#555; font-size:.95rem; }
+  </style>
+</head>
+<body>
+  <!-- Pull out menu modal -->
+  <button id="menu-toggle" type="button" aria-expanded="true" aria-controls="side-menu" aria-label="Toggle game menu">✕ Close</button>
+  <div id="menu-backdrop" role="presentation"></div>
+  <aside id="side-menu" aria-hidden="false" tabindex="-1">
+    <h2>Game Menu</h2>
+    <p>Sign in to track your streak, then use the Start Game button below the board whenever you're ready to play.</p>
+    <div class="login-panel" aria-live="polite">
+      <form id="login-form">
+        <label for="username-input">Player username</label>
+        <div class="login-row">
+          <input id="username-input" name="username" type="text" placeholder="Enter username" autocomplete="nickname" required />
+          <button type="submit" id="login-button">Log In</button>
+        </div>
+      </form>
+      <button id="logout-button" type="button" style="display: none;">Log Out</button>
+      <p class="login-hint">Your daily streak is saved per username on this device.</p>
+      <a class="external-link" href="https://cordell33.github.io/GodlePuzzle/" target="_blank" rel="noopener noreferrer">Godle (daily)</a>
+      <a class="external-link" href="https://cordell33.github.io/GodleHex/" target="_blank" rel="noopener noreferrer">GodleHex (weekly)</a>
+    </div>
+  </aside>
+
+  <div id="start-screen">
+    <h1>Welcome to CORDLLE</h1>
+    <p>A puzzle that uses logic and math using rules like Gödle</p>
+    <ul style="text-align: left; max-width: 400px; margin: 0 auto;">
+      <li>Answer the questions correctly</li>
+      <li>This will help determine the final code word.</li>
+      <li>Green = correct letter & position, Yellow = correct letter, wrong position.</li>
+      <li>One letter will not be used and will be placed at the end.</li>
+      <li>Share this with your friends.</li>
+      <li>Good Luck!</li>
+    </ul>
+    <button id="start-button">Start Game</button>
+  </div>
+
+  <h1>CORDLLE</h1>
+  <div class="game-area">
+    <div class="questions" id="questions"></div>
+    <div class="guesses" id="guess-container"></div>
+  </div>
+  <div id="strike-counter">Log in to track Days 🔥</div>
+  <div id="game-over"></div>
+  <footer>created by Cordell Booth</footer>
+
+  <script>
+    // ===== Slide Menu Controller =====
+    (function(){
+      const btn = document.getElementById('menu-toggle');
+      const aside = document.getElementById('side-menu');
+      const backdrop = document.getElementById('menu-backdrop');
+      if (!btn || !aside || !backdrop) return;
+
+      let lastFocus = null;
+      const focusableSel = 'a[href], button:not([disabled]), input, textarea, select, [tabindex]:not([tabindex="-1"])';
+
+      function isOpen(){ return document.body.classList.contains('menu-open'); }
+      function open(){
+        if (isOpen()) return;
+        lastFocus = document.activeElement;
+        document.body.classList.add('menu-open');
+        btn.setAttribute('aria-expanded','true');
+        aside.setAttribute('aria-hidden','false');
+        btn.textContent = '✕ Close';
+        setTimeout(()=>{ (aside.querySelector(focusableSel) || aside).focus(); }, 0);
+      }
+      function close(){
+        if (!isOpen()) return;
+        document.body.classList.remove('menu-open');
+        btn.setAttribute('aria-expanded','false');
+        aside.setAttribute('aria-hidden','true');
+        btn.textContent = '☰ Menu';
+        if (lastFocus && typeof lastFocus.focus === 'function') lastFocus.focus();
+      }
+      function toggle(){ isOpen() ? close() : open(); }
+      (btn.getAttribute('aria-expanded') === 'true') ? open() : close();
+      btn.addEventListener('click', toggle);
+      backdrop.addEventListener('click', close);
+      window.addEventListener('keydown', (e)=>{ if (e.key === 'Escape') close(); });
+      aside.addEventListener('keydown', (e)=>{
+        if (!isOpen() || e.key !== 'Tab') return;
+        const items = Array.from(aside.querySelectorAll(focusableSel)).filter(el => el.offsetParent !== null);
+        if (!items.length) return;
+        const first = items[0], last = items[items.length - 1];
+        if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+        else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+      });
+      document.querySelectorAll('.external-link').forEach(link => link.addEventListener('click', e => e.stopPropagation()));
+    })();
+  </script>
+
+  <script>
+    // ===== Game Logic =====
+    const questions = [
+      "First letter of the alphabet",
+      "___ to the world, the lord as come",
+      "Flour is typically made from this grain",
+      "Feeling sick",
+      "Last letter of the alphabet"
+    ];
+
+    const correctAnswers = [
+      ["A"],
+      ["J", "O", "Y"],
+      ["W", "H", "E", "A", "T"],
+      ["I", "L", "L"],
+      ["Z"]
+    ];
+
+    const pyramid = [1, 3, 5, 3, 1, 6];
+    const code = ["Y", "E", "L", "L", "O", "W"];
+
+    const questionsDiv = document.getElementById("questions");
+    const guessContainer = document.getElementById("guess-container");
+    const gameOverDiv = document.getElementById("game-over");
+    const startScreen = document.getElementById("start-screen");
+    const startButton = document.getElementById("start-button");
+    const strikeDisplay = document.getElementById("strike-counter");
+
+    // ===== Strike Counter Per Username (resets monthly) =====
+    let currentUser = null;
+
+    function todayKey() {
+      const d = new Date();
+      const y = d.getFullYear();
+      const m = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      return `${y}-${m}-${day}`;
+    }
+
+    function getDaysPlayed(user) {
+      return Number(localStorage.getItem(`cordlle:${user}:daysPlayed`) || 0);
+    }
+
+    function setDaysPlayed(user, n) {
+      localStorage.setItem(`cordlle:${user}:daysPlayed`, String(n));
+    }
+
+    function getLastPlayed(user) {
+      return localStorage.getItem(`cordlle:${user}:lastPlayed`);
+    }
+
+    function setLastPlayed(user, key) {
+      localStorage.setItem(`cordlle:${user}:lastPlayed`, key);
+    }
+
+    function updateStrikeDisplay() {
+      if (!currentUser) {
+        strikeDisplay.textContent = "Log in to track Days 🔥";
+        return;
+      }
+      const days = getDaysPlayed(currentUser);
+      strikeDisplay.textContent = `${days} Days 🔥`;
+    }
+
+    function incrementStrikeIfNewDay() {
+      if (!currentUser) return;
+      const today = todayKey();            // YYYY-MM-DD
+      const todayMonth = today.slice(0, 7); // YYYY-MM
+      const last = getLastPlayed(currentUser); // may be null or YYYY-MM-DD
+
+      // If month changed since last play, reset this user's monthly counter
+      if (last && last.slice(0, 7) !== todayMonth) {
+        setDaysPlayed(currentUser, 0);
+      }
+
+      // Increment only once per calendar day
+      if (last !== today) {
+        const next = getDaysPlayed(currentUser) + 1;
+        setDaysPlayed(currentUser, next);
+        setLastPlayed(currentUser, today);
+      }
+
+      updateStrikeDisplay();
+    }
+
+    // ===== Login Handling =====
+    const loginForm = document.getElementById("login-form");
+    const usernameInput = document.getElementById("username-input");
+    const logoutButton = document.getElementById("logout-button");
+
+    loginForm.addEventListener("submit", (e) => {
+      e.preventDefault();
+      const user = usernameInput.value.trim();
+      if (!user) return;
+      currentUser = user;
+      loginForm.style.display = "none";
+      logoutButton.style.display = "block";
+
+      // Ensure monthly reset is respected when a user logs in mid-month change
+      const last = getLastPlayed(currentUser);
+      const today = todayKey();
+      if (last && last.slice(0,7) !== today.slice(0,7)) {
+        setDaysPlayed(currentUser, 0);
+      }
+
+      updateStrikeDisplay();
+    });
+
+    logoutButton.addEventListener("click", () => {
+      currentUser = null;
+      loginForm.style.display = "block";
+      logoutButton.style.display = "none";
+      updateStrikeDisplay();
+    });
+
+    // ===== Feedback mapping vs. final code (YELLOW)
+    function getFeedbackForRow(step, inputArr) {
+      const maps = { 0:[2], 1:[1,2,3], 2:[0,1,2,3,4], 3:[1,2,3], 4:[2], 5:[0,1,2,3,4,5] };
+      const codeMap = maps[step] || [];
+      const feedback = new Array(inputArr.length).fill("gray");
+      const solution = ["Y","E","L","L","O","W"];
+      const available = solution.slice();
+
+      // Greens first
+      for (let i = 0; i < inputArr.length; i++) {
+        const codeIdx = codeMap[i];
+        if (codeIdx !== undefined && inputArr[i] === solution[codeIdx]) {
+          feedback[i] = "green";
+          available[codeIdx] = null;
+        }
+      }
+      // Then yellows
+      for (let i = 0; i < inputArr.length; i++) {
+        if (feedback[i] !== "gray") continue;
+        const letter = inputArr[i];
+        const poolIdx = available.indexOf(letter);
+        if (poolIdx !== -1) { feedback[i] = "yellow"; available[poolIdx] = null; }
+      }
+      return feedback;
+    }
+
+    // ===== Evaluate a row submission
+    function evaluate(inputArr, step) {
+      const row = document.getElementById(`row-${step}`);
+      const resultSpan = document.getElementById(`result-${step}`);
+      const expected = step < correctAnswers.length ? correctAnswers[step] : code;
+
+      // Must match exact answer for rows 0..4; otherwise shake and exit (no hints)
+      const isCorrect = inputArr.length === expected.length && inputArr.every((v, i) => v === expected[i]);
+      if (step < correctAnswers.length && !isCorrect) {
+        row.classList.add("shake");
+        setTimeout(() => row.classList.remove("shake"), 300);
+        return;
+      }
+
+      // Mark question as solved
+      if (resultSpan) {
+        resultSpan.textContent = "✅";
+        resultSpan.style.visibility = "visible";
+      }
+
+      // Show feedback and lock the row
+      const feedback = getFeedbackForRow(step, inputArr);
+      const inputs = row.querySelectorAll(".cell");
+      inputs.forEach((input, i) => {
+        input.classList.add(feedback[i]);
+        input.disabled = true;
+      });
+
+      // Final code row result message
+      if (step === pyramid.length - 1) {
+        const finalCorrect = inputArr.length === code.length && inputArr.every((v, i) => v === code[i]);
+        gameOverDiv.textContent = finalCorrect ? "🎉 You cracked the code!" : `❌ Incorrect. The code was ${code.join("")}`;
+      }
+    }
+
+    // ===== Render all rows/questions (diamond + final code)
+    function renderQuestion() {
+      for (let step = 0; step < pyramid.length; step++) {
+        if (step === correctAnswers.length) {
+          const label = document.createElement("div");
+          label.textContent = "Enter the CORDLLE word";
+          label.style.fontWeight = "bold";
+          label.style.marginTop = "1rem";
+          label.style.alignSelf = "flex-start";
+          guessContainer.appendChild(label);
+        }
+
+        if (step < questions.length) {
+          const questionContainer = document.createElement("div");
+          questionContainer.className = "question-container";
+
+          const questionText = document.createElement("div");
+          questionText.className = "question-text";
+          questionText.textContent = questions[step];
+          questionContainer.appendChild(questionText);
+
+          const resultSpan = document.createElement("div");
+          resultSpan.className = "question-result";
+          resultSpan.id = `result-${step}`;
+          questionContainer.appendChild(resultSpan);
+
+          questionsDiv.appendChild(questionContainer);
+        }
+
+        const rowDiv = document.createElement("div");
+        rowDiv.className = "row";
+        rowDiv.style.justifyContent = (step < 5) ? "center" : "flex-start";
+        rowDiv.id = `row-${step}`;
+
+        const rowPatterns = [
+          [null,  null,  'cell', null, null],
+          [null, 'cell', 'cell', 'cell', null],
+          ['cell','cell','cell', 'cell', 'cell'],
+          [null, 'cell', 'cell', 'cell', null],
+          [null,  null,  'cell', null, null]
+        ];
+
+        if (step < 5) {
+          const layout = rowPatterns[step];
+          layout.forEach((cell) => {
+            const box = document.createElement("div");
+            if (cell === "cell") {
+              const input = document.createElement("input");
+              input.className = "cell";
+              input.maxLength = 1;
+              input.type = "text";
+              input.autocomplete = "off";
+              input.spellcheck = false;
+
+              input.addEventListener("input", (e) => {
+                input.value = input.value.toUpperCase().replace(/[^A-Z]/g, "");
+                const siblings = Array.from(rowDiv.querySelectorAll(".cell"));
+                const index = siblings.indexOf(input);
+                if (e.target.value.length === 1 && index < siblings.length - 1) {
+                  siblings[index + 1].focus();
+                }
+              });
+
+              input.addEventListener("keydown", (e) => {
+                const siblings = Array.from(rowDiv.querySelectorAll(".cell"));
+                const index = siblings.indexOf(input);
+                if (e.key === "Enter") {
+                  const values = siblings.map(i => i.value.trim().toUpperCase());
+                  if (values.every(v => v !== "")) {
+                    evaluate(values, step);
+                  }
+                }
+                if ((e.key === "Backspace" || e.key === "Delete") && e.target.value === "" && index > 0) {
+                  siblings[index - 1].focus();
+                }
+              });
+
+              rowDiv.appendChild(input);
+            } else {
+              box.style.width = "2.5rem";
+              box.style.margin = "0.15rem";
+              rowDiv.appendChild(box);
+            }
+          });
+        } else {
+          // Final code row (6 letters), left-aligned
+          for (let i = 0; i < pyramid[step]; i++) {
+            const input = document.createElement("input");
+            input.className = "cell";
+            input.maxLength = 1;
+            input.type = "text";
+            input.autocomplete = "off";
+            input.spellcheck = false;
+
+            input.addEventListener("input", (e) => {
+              input.value = input.value.toUpperCase().replace(/[^A-Z]/g, "");
+              if (e.target.value.length === 1 && i < pyramid[step] - 1) {
+                rowDiv.children[i + 1].focus();
+              }
+            });
+
+            input.addEventListener("keydown", (e) => {
+              if (e.key === "Enter") {
+                const values = Array.from(rowDiv.querySelectorAll(".cell")).map(i => i.value.trim().toUpperCase());
+                if (values.every(v => v !== "")) {
+                  evaluate(values, step);
+                }
+              }
+              if ((e.key === "Backspace" || e.key === "Delete") && e.target.value === "" && i > 0) {
+                rowDiv.children[i - 1].focus();
+              }
+            });
+
+            rowDiv.appendChild(input);
+          }
+        }
+
+        guessContainer.appendChild(rowDiv);
+      }
+    }
+
+    // ===== Start
+    startButton.addEventListener("click", () => {
+      startScreen.style.display = "none";
+      gameOverDiv.textContent = "";
+      renderQuestion();
+      // Count a strike (day played) when starting a new session for this user
+      incrementStrikeIfNewDay();
+    });
+
+    // ===== Minimal runtime checks (dev assertions)
+    console.assert(document.getElementById('menu-toggle'), '#menu-toggle missing');
+    console.assert(document.getElementById('side-menu'), '#side-menu missing');
+    console.assert(document.getElementById('menu-backdrop'), '#menu-backdrop missing');
+
+    // ===== Tiny self-tests (non-breaking)
+    (function devTests(){
+      try {
+        console.assert(typeof getFeedbackForRow === 'function', 'getFeedbackForRow missing');
+        const greens = getFeedbackForRow(5, ["Y","E","L","L","O","W"]).every(c => c === 'green');
+        console.assert(greens, 'Final code feedback should be all green');
+        // format test for todayKey
+        console.assert(/^\d{4}-\d{2}-\d{2}$/.test(todayKey()), 'todayKey() format');
+      } catch(e) { /* no-op in prod */ }
+    })();
+  </script>
+</body>
+</html>
