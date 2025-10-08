@@ -5,10 +5,15 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>CORDLLE</title>
   <style>
+    :root {
+      --primary-color: #f5b400;
+      --primary-dark-color: #ffde7a;
+    }
+
     body {
       font-family: sans-serif;
       background: white;
-      color: red;
+      color: var(--primary-color);
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -19,9 +24,9 @@
     }
     body.dark-mode {
       background: #000;
-      color: #ff6b6b;
+      color: var(--primary-dark-color);
     }
-    h1 { font-size: 2.5rem; margin-bottom: 1rem; color: red; transition: color 0.3s ease; }
+    h1 { font-size: 2.5rem; margin-bottom: 1rem; color: var(--primary-color); transition: color 0.3s ease; }
     .game-area {
       display: flex;
       align-items: flex-start;
@@ -33,20 +38,20 @@
     }
     .questions { font-size: 1.2rem; min-width: 220px; display: flex; flex-direction: column; gap: 1rem; }
     .question-container { display: flex; align-items: center; gap: 0.5rem; }
-    .question-text { background-color: #f5f5f5; border-left: 4px solid red; padding: 0.5rem; font-weight: bold; border-radius: 4px; flex-grow: 1; color: red; transition: background 0.3s ease, color 0.3s ease, border-color 0.3s ease; }
-    .question-result { font-size: 1.5rem; color: red; width: 30px; text-align: center; visibility: hidden; transition: color 0.3s ease; }
+    .question-text { background-color: #f5f5f5; border-left: 4px solid var(--primary-color); padding: 0.5rem; font-weight: bold; border-radius: 4px; flex-grow: 1; color: var(--primary-color); transition: background 0.3s ease, color 0.3s ease, border-color 0.3s ease; }
+    .question-result { font-size: 1.5rem; color: var(--primary-color); width: 30px; text-align: center; visibility: hidden; transition: color 0.3s ease; }
     .guesses { display: flex; flex-direction: column; align-items: flex-start; width: 100%; max-width: 17rem; }
     .row { display: flex; margin: 0.5rem 0; justify-content: flex-start; align-items: center; transition: transform 0.2s; }
     .row.shake { animation: shake 0.3s; }
     @keyframes shake { 0%{transform:translateX(0)}25%{transform:translateX(-5px)}50%{transform:translateX(5px)}75%{transform:translateX(-5px)}100%{transform:translateX(0)} }
-    .cell { width: 2.5rem; height: 2.5rem; font-size: 1.2rem; margin: 0.15rem; text-align: center; border: 2px solid #444; border-radius: 8px; background: #eee; color: red; text-transform: uppercase; transition: background 0.3s ease, color 0.3s ease, border-color 0.3s ease; }
+    .cell { width: 2.5rem; height: 2.5rem; font-size: 1.2rem; margin: 0.15rem; text-align: center; border: 2px solid #444; border-radius: 8px; background: #eee; color: var(--primary-color); text-transform: uppercase; transition: background 0.3s ease, color 0.3s ease, border-color 0.3s ease; }
     .cell.green { background: green; color: white; border-color: green; }
     .cell.yellow { background: goldenrod; color: white; border-color: goldenrod; }
     .cell.gray { background: #ccc; color: white; border-color: #ccc; }
     #game-over { margin-top: 1rem; font-size: 1.2rem; text-align: center; min-height: 2rem; transition: color 0.3s ease; }
-    #start-screen { position: fixed; top:0; left:0; right:0; bottom:0; background:white; color:red; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; padding:2rem; z-index:999; transition: background 0.3s ease, color 0.3s ease; }
-    #start-button { margin-top: 1rem; padding: 0.5rem 1.5rem; font-size: 1.2rem; cursor: pointer; color: red; background: white; border: 2px solid red; border-radius: 5px; }
-    footer { margin-top: 2rem; color: red; font-weight: bold; transition: color 0.3s ease; }
+    #start-screen { position: fixed; top:0; left:0; right:0; bottom:0; background:white; color:var(--primary-color); display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; padding:2rem; z-index:999; transition: background 0.3s ease, color 0.3s ease; }
+    #start-button { margin-top: 1rem; padding: 0.5rem 1.5rem; font-size: 1.2rem; cursor: pointer; color: var(--primary-color); background: white; border: 2px solid var(--primary-color); border-radius: 5px; }
+    footer { margin-top: 2rem; color: var(--primary-color); font-weight: bold; transition: color 0.3s ease; }
 
     /* ===== Slide Menu (off-canvas) ===== */
     #menu-toggle { position: fixed; top: 1rem; left: 1rem; z-index: 1100; background: #00bcd4; color: #121212; border: none; border-radius: 999px; padding: 0.55rem 1.1rem; font-size: 1.1rem; font-weight: 700; cursor: pointer; box-shadow: 0 4px 12px rgba(0,0,0,0.4); transition: background 0.2s ease, transform 0.2s ease; }
@@ -88,11 +93,11 @@
     body.dark-mode footer,
     body.dark-mode #strike-counter,
     body.dark-mode #game-over,
-    body.dark-mode .question-result { color: #ff6b6b; }
-    body.dark-mode .question-text { background-color: #1f1f1f; border-left-color: #ff4d4d; color: #ff8585; }
-    body.dark-mode .cell { background: #1d1d1d; border-color: #666; color: #ff8585; }
-    body.dark-mode #start-screen { background: rgba(0,0,0,0.95); color: #ff8080; }
-    body.dark-mode #start-button { background: #111; color: #ff8080; border: 2px solid #ff4d4d; }
+    body.dark-mode .question-result { color: var(--primary-dark-color); }
+    body.dark-mode .question-text { background-color: #1f1f1f; border-left-color: var(--primary-dark-color); color: var(--primary-dark-color); }
+    body.dark-mode .cell { background: #1d1d1d; border-color: #666; color: var(--primary-dark-color); }
+    body.dark-mode #start-screen { background: rgba(0,0,0,0.95); color: var(--primary-dark-color); }
+    body.dark-mode #start-button { background: #111; color: var(--primary-dark-color); border: 2px solid var(--primary-dark-color); }
     body.dark-mode #side-menu { background: #111; color: #f1f1f1; box-shadow:8px 0 24px rgba(0,0,0,0.6); }
     body.dark-mode #side-menu h2 { color:#4dd0e1; }
     body.dark-mode #side-menu p,
