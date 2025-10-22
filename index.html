@@ -499,6 +499,17 @@
         input.disabled = true;
       });
 
+      // Move focus to the first input of the next row (if any)
+      if (step < pyramid.length - 1) {
+        const nextRow = document.getElementById(`row-${step + 1}`);
+        if (nextRow) {
+          const nextInput = nextRow.querySelector(".cell:not([disabled])");
+          if (nextInput) {
+            nextInput.focus();
+          }
+        }
+      }
+
       // Final code row result message
       if (step === pyramid.length - 1) {
         const finalCorrect = inputArr.length === code.length && inputArr.every((v, i) => v === code[i]);
@@ -588,6 +599,7 @@
                     evaluate(values, step);
                   }
                 }
+
                 if ((e.key === "Backspace" || e.key === "Delete") && e.target.value === "" && index > 0) {
                   siblings[index - 1].focus();
                 }
