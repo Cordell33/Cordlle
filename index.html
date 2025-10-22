@@ -521,12 +521,26 @@
               input.addEventListener("keydown", (e) => {
                 const siblings = Array.from(rowDiv.querySelectorAll(".cell"));
                 const index = siblings.indexOf(input);
+
+                if (e.key === "ArrowLeft" && index > 0) {
+                  e.preventDefault();
+                  siblings[index - 1].focus();
+                  return;
+                }
+
+                if (e.key === "ArrowRight" && index < siblings.length - 1) {
+                  e.preventDefault();
+                  siblings[index + 1].focus();
+                  return;
+                }
+
                 if (e.key === "Enter") {
                   const values = siblings.map(i => i.value.trim().toUpperCase());
                   if (values.every(v => v !== "")) {
                     evaluate(values, step);
                   }
                 }
+
                 if ((e.key === "Backspace" || e.key === "Delete") && e.target.value === "" && index > 0) {
                   siblings[index - 1].focus();
                 }
@@ -557,12 +571,25 @@
             });
 
             input.addEventListener("keydown", (e) => {
+              if (e.key === "ArrowLeft" && i > 0) {
+                e.preventDefault();
+                rowDiv.children[i - 1].focus();
+                return;
+              }
+
+              if (e.key === "ArrowRight" && i < pyramid[step] - 1) {
+                e.preventDefault();
+                rowDiv.children[i + 1].focus();
+                return;
+              }
+
               if (e.key === "Enter") {
                 const values = Array.from(rowDiv.querySelectorAll(".cell")).map(i => i.value.trim().toUpperCase());
                 if (values.every(v => v !== "")) {
                   evaluate(values, step);
                 }
               }
+
               if ((e.key === "Backspace" || e.key === "Delete") && e.target.value === "" && i > 0) {
                 rowDiv.children[i - 1].focus();
               }
