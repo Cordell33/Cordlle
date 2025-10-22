@@ -289,6 +289,68 @@
     const pyramid = [1, 3, 5, 3, 1, 6];
     const code = ["Y", "E", "L", "L", "O", "W"];
 
+    function findClosestCell(rowIndex, colIndex) {
+      const row = document.getElementById(`row-${rowIndex}`);
+      if (!row) return null;
+      const cells = Array.from(row.querySelectorAll(".cell"));
+      if (!cells.length) return null;
+      let candidate = null;
+      let bestDistance = Infinity;
+      cells.forEach((cell) => {
+        const cellCol = Number(cell.dataset.col);
+        const distance = Math.abs(cellCol - colIndex);
+        if (distance < bestDistance) {
+          bestDistance = distance;
+          candidate = cell;
+        }
+      });
+      return candidate;
+    }
+
+    function findHorizontalCell(rowIndex, colIndex, direction) {
+      const row = document.getElementById(`row-${rowIndex}`);
+      if (!row) return null;
+      const cells = Array.from(row.querySelectorAll(".cell"));
+      if (!cells.length) return null;
+      let candidate = null;
+      if (direction === "left") {
+        let best = -Infinity;
+        cells.forEach((cell) => {
+          const cellCol = Number(cell.dataset.col);
+          if (cellCol < colIndex && cellCol > best) {
+            best = cellCol;
+            candidate = cell;
+          }
+        });
+      } else {
+        let best = Infinity;
+        cells.forEach((cell) => {
+          const cellCol = Number(cell.dataset.col);
+          if (cellCol > colIndex && cellCol < best) {
+            best = cellCol;
+            candidate = cell;
+          }
+        });
+      }
+      return candidate;
+    }
+
+    function moveFocus(rowIndex, colIndex, direction) {
+      let target = null;
+      if (direction === "left" || direction === "right") {
+        target = findHorizontalCell(rowIndex, colIndex, direction);
+      } else {
+        const step = direction === "up" ? -1 : 1;
+        for (let r = rowIndex + step; r >= 0 && r < pyramid.length; r += step) {
+          target = findClosestCell(r, colIndex);
+          if (target) break;
+        }
+      }
+      if (target) {
+        target.focus();
+      }
+    }
+
     const questionsDiv = document.getElementById("questions");
     const guessContainer = document.getElementById("guess-container");
     const gameOverDiv = document.getElementById("game-over");
@@ -488,7 +550,7 @@
 
         if (step < 5) {
           const layout = rowPatterns[step];
-          layout.forEach((cell) => {
+          layout.forEach((cell, colIndex) => {
             const box = document.createElement("div");
             if (cell === "cell") {
               const input = document.createElement("input");
@@ -497,6 +559,8 @@
               input.type = "text";
               input.autocomplete = "off";
               input.spellcheck = false;
+              input.dataset.row = String(step);
+              input.dataset.col = String(colIndex);
 
               input.addEventListener("input", (e) => {
                 input.value = input.value.toUpperCase().replace(/[^A-Z]/g, "");
@@ -510,6 +574,14 @@
               input.addEventListener("keydown", (e) => {
                 const siblings = Array.from(rowDiv.querySelectorAll(".cell"));
                 const index = siblings.indexOf(input);
+                const rowIndex = Number(input.dataset.row);
+                const colIndex = Number(input.dataset.col);
+                if (e.key === "ArrowLeft" || e.key === "ArrowRight" || e.key === "ArrowUp" || e.key === "ArrowDown") {
+                  e.preventDefault();
+                  const direction = e.key.replace("Arrow", "").toLowerCase();
+                  moveFocus(rowIndex, colIndex, direction);
+                  return;
+                }
                 if (e.key === "Enter") {
                   const values = siblings.map(i => i.value.trim().toUpperCase());
                   if (values.every(v => v !== "")) {
@@ -537,23 +609,37 @@
             input.type = "text";
             input.autocomplete = "off";
             input.spellcheck = false;
+            input.dataset.row = String(step);
+            input.dataset.col = String(i);
 
             input.addEventListener("input", (e) => {
               input.value = input.value.toUpperCase().replace(/[^A-Z]/g, "");
-              if (e.target.value.length === 1 && i < pyramid[step] - 1) {
-                rowDiv.children[i + 1].focus();
+              const siblings = Array.from(rowDiv.querySelectorAll(".cell"));
+              const index = siblings.indexOf(input);
+              if (e.target.value.length === 1 && index < siblings.length - 1) {
+                siblings[index + 1].focus();
               }
             });
 
             input.addEventListener("keydown", (e) => {
+              const siblings = Array.from(rowDiv.querySelectorAll(".cell"));
+              const index = siblings.indexOf(input);
+              const rowIndex = Number(input.dataset.row);
+              const colIndex = Number(input.dataset.col);
+              if (e.key === "ArrowLeft" || e.key === "ArrowRight" || e.key === "ArrowUp" || e.key === "ArrowDown") {
+                e.preventDefault();
+                const direction = e.key.replace("Arrow", "").toLowerCase();
+                moveFocus(rowIndex, colIndex, direction);
+                return;
+              }
               if (e.key === "Enter") {
-                const values = Array.from(rowDiv.querySelectorAll(".cell")).map(i => i.value.trim().toUpperCase());
+                const values = siblings.map(i => i.value.trim().toUpperCase());
                 if (values.every(v => v !== "")) {
                   evaluate(values, step);
                 }
               }
-              if ((e.key === "Backspace" || e.key === "Delete") && e.target.value === "" && i > 0) {
-                rowDiv.children[i - 1].focus();
+              if ((e.key === "Backspace" || e.key === "Delete") && e.target.value === "" && index > 0) {
+                siblings[index - 1].focus();
               }
             });
 
