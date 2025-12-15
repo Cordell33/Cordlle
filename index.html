@@ -93,6 +93,9 @@
     .cell.gray { background: #ccc; color: white; border-color: #ccc; }
 
     #game-over { margin-top: 1rem; font-size: 1.2rem; text-align: center; min-height: 2rem; }
+    .other-games { margin-top: 1rem; color: goldenrod; font-weight: bold; }
+    .other-games a { display: block; margin-top: 0.35rem; color: #00bcd4; font-weight: 700; text-decoration: none; }
+    .other-games a:hover { text-decoration: underline; color: #ff9800; }
     footer { margin-top: 2rem; color: goldenrod; font-weight: bold; }
 
     #start-screen {
@@ -463,7 +466,14 @@
 
         // Only celebrate on correct; silent on wrong
         if (isCorrect) {
-          gameOverDiv.textContent = "🎉 You cracked the code!";
+          gameOverDiv.innerHTML = `
+            🎉 You cracked the code!
+            <div class="other-games">
+              <div>Try other games:</div>
+              <a href="https://cordell33.github.io/GodlePuzzle/" target="_blank" rel="noopener noreferrer">Godle</a>
+              <a href="https://cordell33.github.io/GodleHex/" target="_blank" rel="noopener noreferrer">GodleHex</a>
+            </div>
+          `;
         }
       }
     }
