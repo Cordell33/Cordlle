@@ -592,6 +592,12 @@
           rowNumber.textContent = String(step + 1);
           rowNumber.setAttribute("aria-hidden", "true");
           rowDiv.appendChild(rowNumber);
+        } else {
+          const rowSpacer = document.createElement("span");
+          rowSpacer.className = "row-number";
+          rowSpacer.textContent = " ";
+          rowSpacer.setAttribute("aria-hidden", "true");
+          rowDiv.appendChild(rowSpacer);
         }
 
         const cellsInRow = pyramid[step];
