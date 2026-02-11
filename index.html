@@ -571,22 +571,14 @@
           questionsDiv.appendChild(questionContainer);
         }
 
-        // Label before final code row (kept on the left with question prompts)
+        // Label before final code row (shown above final inputs)
         if (step === correctAnswers.length - 1) {
-          const labelContainer = document.createElement("div");
-          labelContainer.className = "question-container";
-
           const label = document.createElement("div");
-          label.className = "question-text";
           label.textContent = "Enter the CORDLLE word";
-          labelContainer.appendChild(label);
-
-          const spacer = document.createElement("div");
-          spacer.className = "question-result";
-          spacer.setAttribute("aria-hidden", "true");
-          labelContainer.appendChild(spacer);
-
-          questionsDiv.appendChild(labelContainer);
+          label.style.fontWeight = "bold";
+          label.style.marginTop = "1rem";
+          label.style.alignSelf = "flex-start";
+          guessContainer.appendChild(label);
         }
 
         const rowDiv = document.createElement("div");
