@@ -66,6 +66,16 @@
       justify-content: flex-start;
       align-items: center;
       transition: transform 0.2s;
+      gap: 0.35rem;
+    }
+    .row-number {
+      width: 1rem;
+      font-size: 0.72rem;
+      font-weight: 700;
+      color: #8f6a00;
+      text-align: right;
+      opacity: 0.95;
+      user-select: none;
     }
     .row.shake { animation: shake 0.3s; }
     @keyframes shake {
@@ -124,15 +134,48 @@
       padding:2rem;
       z-index:999;
     }
+    .instructions-card {
+      background: linear-gradient(145deg, #fffdfa, #fff8e8);
+      border: 1px solid #f3df9e;
+      border-radius: 14px;
+      box-shadow: 0 10px 22px rgba(184, 134, 11, 0.16);
+      max-width: 480px;
+      padding: 1.25rem 1.4rem;
+    }
+    .instructions-subtitle {
+      margin: 0.35rem 0 0.9rem;
+      font-size: 1.08rem;
+      line-height: 1.45;
+      color: #9c6f00;
+      font-family: "Segoe UI", Arial, sans-serif;
+    }
+    .instructions-list {
+      text-align: left;
+      margin: 0;
+      padding-left: 1.15rem;
+      color: #8f6a00;
+      font-size: 1rem;
+      line-height: 1.55;
+      font-family: "Segoe UI", Arial, sans-serif;
+    }
     #start-button {
       margin-top: 1rem;
-      padding: 0.5rem 1.5rem;
-      font-size: 1.2rem;
+      padding: 0.58rem 1.6rem;
+      font-size: 1.08rem;
       cursor: pointer;
       color: goldenrod;
       background: white;
       border: 2px solid goldenrod;
-      border-radius: 5px;
+      border-radius: 999px;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      box-shadow: 0 4px 10px rgba(184, 134, 11, 0.2);
+      transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+    }
+    #start-button:hover {
+      background: #fff4cc;
+      transform: translateY(-1px);
+      box-shadow: 0 8px 16px rgba(184, 134, 11, 0.24);
     }
 
     /* ===== Slide Menu ===== */
@@ -294,7 +337,15 @@
     body.dark-mode .cell.gray { background:#767676; border-color:#767676; color:#fff; }
     body.dark-mode .cell.yellow { background:#ffd54f; border-color:#ffd54f; color:#1b1b1b; }
     body.dark-mode .cell.green { background:#2e7d32; border-color:#2e7d32; color:#fff; }
+    body.dark-mode .row-number { color:#d3b24f; }
     body.dark-mode #start-screen { background:#121212; color:#ffd700; }
+    body.dark-mode .instructions-card {
+      background: linear-gradient(145deg, #1b1b1b, #222222);
+      border-color: #5a4a1a;
+      box-shadow: 0 10px 22px rgba(0,0,0,0.45);
+    }
+    body.dark-mode .instructions-subtitle,
+    body.dark-mode .instructions-list { color:#f0d67d; }
     body.dark-mode #menu-toggle { background:#263238; color:#ffd700; }
     body.dark-mode #menu-toggle:hover { background:#37474f; }
     body.dark-mode #side-menu { background:#1b1b1b; box-shadow:8px 0 24px rgba(0,0,0,0.65); }
@@ -345,17 +396,18 @@
   </aside>
 
   <div id="start-screen">
-    <h1>Welcome to CORDLLE</h1>
-    <p>A puzzle that uses logic and math using rules like Gödle</p>
-    <ul style="text-align:left;max-width:400px;margin:0 auto;">
-      <li>Answer the questions correctly</li>
-      <li>This will help determine the final code word.</li>
-      <li>Green = correct letter & position, Yellow = correct letter, wrong position.</li>
-      <li>Use logic to solve and have fun.</li>
-      <li>Share this with your friends.</li>
-      <li>Good Luck!</li>
-    </ul>
-    <button id="start-button">Start Game</button>
+    <div class="instructions-card">
+      <h1>Welcome to CORDLLE</h1>
+      <p class="instructions-subtitle">A logic-and-math word challenge inspired by Gödle rules.</p>
+      <ul class="instructions-list">
+        <li>Answer each clue correctly to build toward the final code word.</li>
+        <li>Green = correct letter in the correct position.</li>
+        <li>Yellow = correct letter in the wrong position.</li>
+        <li>Use logic, track patterns, and have fun.</li>
+        <li>Share it with your friends and compare results.</li>
+      </ul>
+      <button id="start-button">Start Game</button>
+    </div>
   </div>
 
   <h1>CORDLLE </h1>
@@ -541,6 +593,14 @@
         rowDiv.className = "row";
         rowDiv.style.justifyContent = "flex-start";
         rowDiv.id = `row-${step}`;
+
+        if (step < correctAnswers.length - 1) {
+          const rowNumber = document.createElement("span");
+          rowNumber.className = "row-number";
+          rowNumber.textContent = String(step + 1);
+          rowNumber.setAttribute("aria-hidden", "true");
+          rowDiv.appendChild(rowNumber);
+        }
 
         const cellsInRow = pyramid[step];
         for (let i = 0; i < cellsInRow; i++) {
