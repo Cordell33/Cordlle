@@ -119,6 +119,27 @@
     .other-games { margin-top: 1rem; color: goldenrod; font-weight: bold; }
     .other-games a { display: block; margin-top: 0.35rem; color: #00bcd4; font-weight: 700; text-decoration: none; }
     .other-games a:hover { text-decoration: underline; color: #ff9800; }
+    .share-buttons {
+      margin-top: 0.9rem;
+      display: flex;
+      gap: 0.6rem;
+      flex-wrap: wrap;
+    }
+    .share-button {
+      border: 2px solid #00bcd4;
+      border-radius: 999px;
+      background: white;
+      color: #007f90;
+      font-weight: 700;
+      padding: 0.4rem 0.9rem;
+      cursor: pointer;
+      transition: background 0.2s ease, color 0.2s ease, transform 0.2s ease;
+    }
+    .share-button:hover {
+      background: #00bcd4;
+      color: #fff;
+      transform: translateY(-1px);
+    }
     footer { margin-top: 2rem; color: goldenrod; font-weight: bold; }
 
     #start-screen {
@@ -359,6 +380,15 @@
     body.dark-mode .login-panel input[type="text"] {
       background:#1e1e1e; color:#f5f5f5; border-color:#555;
     }
+    body.dark-mode .share-button {
+      background: #1f1f1f;
+      color: #7bdce8;
+      border-color: #4bc8d8;
+    }
+    body.dark-mode .share-button:hover {
+      background: #4bc8d8;
+      color: #112;
+    }
 
     @media (max-width: 768px) {
       #menu-toggle {
@@ -559,10 +589,27 @@
               <div>Try other games:</div>
               <a href="https://cordell33.github.io/GodlePuzzle/" target="_blank" rel="noopener noreferrer">Godle</a>
               <a href="https://cordell33.github.io/GodleHex/" target="_blank" rel="noopener noreferrer">GodleHex</a>
+              <div class="share-buttons">
+                <button type="button" id="share-threads" class="share-button">Share on Threads</button>
+              </div>
             </div>
           `;
+          const threadsButton = document.getElementById("share-threads");
+          if (threadsButton) {
+            threadsButton.addEventListener("click", shareOnThreads);
+          }
         }
       }
+    }
+
+    function getShareText() {
+      const puzzleUrl = window.location.href;
+      return `I cracked the CORDLLE code. Can you solve it? ${puzzleUrl}`;
+    }
+
+    function shareOnThreads() {
+      const shareUrl = `https://www.threads.com/intent/post?text=${encodeURIComponent(getShareText())}`;
+      window.open(shareUrl, "_blank", "noopener,noreferrer");
     }
 
     // ===== Render pyramid + questions =====
