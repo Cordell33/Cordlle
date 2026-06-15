@@ -357,6 +357,25 @@
     #streak-count { font-size: 1.6rem; color:#b8860b; }
     .streak-note { display:block; margin-top:6px; color:#777; font-size: .85rem; }
 
+    .code-word-label {
+      font-weight: bold;
+      margin-top: 1rem;
+      align-self: flex-start;
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+    }
+    .code-word-label-main {
+      display: block;
+      color: goldenrod;
+    }
+    .code-word-label-hint {
+      display: block;
+      font-size: 0.85rem;
+      font-weight: normal;
+      color: goldenrod;
+    }
+
     body.dark-mode { background:#121212; color:#f5f5f5; }
     body.dark-mode h1,
     body.dark-mode .question-text,
@@ -399,6 +418,10 @@
       background: #4bc8d8;
       color: #112;
     }
+    body.dark-mode .code-word-label-main,
+    body.dark-mode .code-word-label-hint {
+      color: #ffd700;
+    }
 
     @media (max-width: 768px) {
       #menu-toggle {
@@ -432,7 +455,7 @@
       <p>Sign in to track your streak, then use Start Game below.</p>
       <div class="login-panel">
         <form id="login-form">
-          <label for="username-input">Player’s email (username)</label>
+          <label for="username-input">Player's email (username)</label>
           <div class="login-row">
             <input id="username-input" name="username" type="text" placeholder="Enter username" autocomplete="nickname" required />
             <button type="submit" id="login-button">Log In</button>
@@ -641,10 +664,18 @@
         // Label before final code row (shown above final inputs)
         if (step === correctAnswers.length - 1) {
           const label = document.createElement("div");
-          label.textContent = " Enter the CORDLLE word: (🟩 = correct 🟨 = wrong) position";
-          label.style.fontWeight = "bold";
-          label.style.marginTop = "1rem";
-          label.style.alignSelf = "flex-start";
+          label.className = "code-word-label";
+          
+          const mainText = document.createElement("span");
+          mainText.className = "code-word-label-main";
+          mainText.textContent = "Enter the CORDLLE word:";
+          label.appendChild(mainText);
+          
+          const hintText = document.createElement("span");
+          hintText.className = "code-word-label-hint";
+          hintText.textContent = "(🟩 = correct  🟨 = wrong position)";
+          label.appendChild(hintText);
+          
           guessContainer.appendChild(label);
         }
 
@@ -662,7 +693,7 @@
         } else {
           const rowSpacer = document.createElement("span");
           rowSpacer.className = "row-number";
-          rowSpacer.textContent = " ";
+          rowSpacer.textContent = " ";
           rowSpacer.setAttribute("aria-hidden", "true");
           rowDiv.appendChild(rowSpacer);
         }
@@ -954,7 +985,7 @@
       startScreen.style.display = "none";
       gameOverDiv.textContent = "";
       renderQuestion();
-      // Count this day’s attempt when the player starts the puzzle
+      // Count this day's attempt when the player starts the puzzle
       incrementStreakForToday();
     }
 
@@ -998,10 +1029,8 @@
       try {
         console.assert(typeof getFeedback === 'function', 'getFeedback missing');
         const allGreen = getFeedback(code, code).every(c => c === 'green');
-        console.assert(allGreen, 'Final code feedback should be all green when input equals code');
-      } catch(e) {
-        // no-op
-      }
+        console.assert(allGreen, 'getFeedback failed: expected all-green when comparing code with itself');
+      } catch (e) { console.warn('[dev test]', e.message); }
     })();
   </script>
 </body>
