@@ -469,7 +469,7 @@
         <li>Share it with your friends and compare results.</li>
         <li><em>New puzzle on the 15th of every month</em></li>
       </ul>
-      <p class="mobile-landscape-note">Play in landscape for a better User Interface</p>
+      <p class="mobile-landscape-note">Turn your phone to landscape to start, or tap Start Game.</p>
       <button id="start-button">Start Game</button>
     </div>
   </div>
@@ -945,13 +945,53 @@
     })();
 
     // ===== Start game =====
-    startButton.addEventListener("click", () => {
+    function isStartScreenVisible() {
+      return startScreen && startScreen.style.display !== "none";
+    }
+
+    function startGame() {
+      if (!isStartScreenVisible()) return;
       startScreen.style.display = "none";
       gameOverDiv.textContent = "";
       renderQuestion();
       // Count this day’s attempt when the player starts the puzzle
       incrementStreakForToday();
+    }
+
+    function isMobileDevice() {
+      const hasTouch = navigator.maxTouchPoints > 0 || "ontouchstart" in window;
+      const mobileViewport = Math.min(window.innerWidth, window.innerHeight) <= 768;
+      return hasTouch && mobileViewport;
+    }
+
+    function isLandscape() {
+      if (screen.orientation && typeof screen.orientation.type === "string") {
+        return screen.orientation.type.startsWith("landscape");
+      }
+      return window.matchMedia("(orientation: landscape)").matches;
+    }
+
+    function startOnMobileLandscape() {
+      if (isStartScreenVisible() && isMobileDevice() && isLandscape()) {
+        startGame();
+      }
+    }
+
+    startButton.addEventListener("click", startGame);
+
+    window.addEventListener("orientationchange", () => {
+      setTimeout(startOnMobileLandscape, 150);
     });
+    window.addEventListener("resize", startOnMobileLandscape);
+
+    const landscapeQuery = window.matchMedia("(orientation: landscape)");
+    if (typeof landscapeQuery.addEventListener === "function") {
+      landscapeQuery.addEventListener("change", startOnMobileLandscape);
+    } else if (typeof landscapeQuery.addListener === "function") {
+      landscapeQuery.addListener(startOnMobileLandscape);
+    }
+
+    startOnMobileLandscape();
 
     // ===== Tiny self-tests (non-breaking) =====
     (function devTests(){
