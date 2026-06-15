@@ -179,6 +179,15 @@
       line-height: 1.55;
       font-family: "Segoe UI", Arial, sans-serif;
     }
+    .mobile-landscape-note {
+      display: none;
+      margin: 1rem 0 0;
+      color: #8f6a00;
+      font-family: "Segoe UI", Arial, sans-serif;
+      font-size: 1rem;
+      line-height: 1.35;
+      font-weight: 700;
+    }
     #start-button {
       margin-top: 1rem;
       padding: 0.58rem 1.6rem;
@@ -366,7 +375,8 @@
       box-shadow: 0 10px 22px rgba(0,0,0,0.45);
     }
     body.dark-mode .instructions-subtitle,
-    body.dark-mode .instructions-list { color:#f0d67d; }
+    body.dark-mode .instructions-list,
+    body.dark-mode .mobile-landscape-note { color:#f0d67d; }
     body.dark-mode #menu-toggle { background:#263238; color:#ffd700; }
     body.dark-mode #menu-toggle:hover { background:#37474f; }
     body.dark-mode #side-menu { background:#1b1b1b; box-shadow:8px 0 24px rgba(0,0,0,0.65); }
@@ -405,6 +415,10 @@
 
       body.dark-mode #side-menu {
         box-shadow: -8px 0 24px rgba(0,0,0,0.65);
+      }
+
+      .mobile-landscape-note {
+        display: block;
       }
     }
   </style>
@@ -455,6 +469,7 @@
         <li>Share it with your friends and compare results.</li>
         <li><em>New puzzle on the 15th of every month</em></li>
       </ul>
+      <p class="mobile-landscape-note">Play in landscape for a better User Interface</p>
       <button id="start-button">Start Game</button>
     </div>
   </div>
