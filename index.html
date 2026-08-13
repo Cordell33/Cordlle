@@ -444,6 +444,31 @@
         display: block;
       }
     }
+
+    /* Give touch and pointer users a larger answer target on tablets and desktops. */
+    @media (min-width: 768px) {
+      .guesses {
+        max-width: 31rem;
+      }
+
+      .cell {
+        width: 44px;
+        height: 44px;
+        font-size: 22px;
+      }
+    }
+
+    @media (min-width: 1024px) {
+      .game-area {
+        max-width: 1000px;
+      }
+
+      .cell {
+        width: 52px;
+        height: 52px;
+        font-size: 26px;
+      }
+    }
   </style>
 </head>
 <body>
