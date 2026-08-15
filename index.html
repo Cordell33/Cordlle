@@ -52,6 +52,9 @@
       text-align: center;
       visibility: hidden;
     }
+    .mobile-current-question {
+      display: none;
+    }
 
     .guesses {
       display: flex;
@@ -492,6 +495,42 @@
       }
     }
 
+    /* During play, phones show only the clue for the row being answered. */
+    body.mobile-device:not(.puzzle-complete) .questions {
+      display: none;
+    }
+
+    body.mobile-device:not(.puzzle-complete) .mobile-current-question {
+      min-width: 0;
+    }
+
+    body.mobile-device:not(.puzzle-complete) .mobile-current-question .question-text {
+      width: min(19rem, 100%);
+      box-sizing: border-box;
+    }
+
+    @media (orientation: landscape) {
+      body.mobile-device:not(.puzzle-complete) #mobile-landscape-question {
+        display: flex;
+        flex-direction: column;
+        width: min(19rem, 42vw);
+      }
+    }
+
+    @media (orientation: portrait) {
+      body.mobile-device:not(.puzzle-complete) .game-area {
+        flex-direction: column;
+        align-items: center;
+        gap: 0;
+      }
+
+      body.mobile-device:not(.puzzle-complete) #mobile-portrait-question:not(:empty) {
+        display: flex;
+        width: 100%;
+        margin-top: 0.75rem;
+      }
+    }
+
     /* Give touch and pointer users a larger answer target on tablets and desktops. */
     @media (min-width: 768px) {
       .guesses {
@@ -572,6 +611,7 @@
   <h1>CORDLLE </h1>
   <div class="game-area">
     <div class="questions" id="questions"></div>
+    <div class="mobile-current-question" id="mobile-landscape-question" aria-live="polite"></div>
     <div class="guesses" id="guess-container"></div>
   </div>
   <div id="game-over"></div>
@@ -614,6 +654,24 @@
     const gameOverDiv    = document.getElementById("game-over");
     const startScreen    = document.getElementById("start-screen");
     const startButton    = document.getElementById("start-button");
+    const mobileLandscapeQuestion = document.getElementById("mobile-landscape-question");
+
+    function createQuestionText(step) {
+      const questionText = document.createElement("div");
+      questionText.className = "question-text";
+      questionText.textContent = `${step + 1}. ${questions[step]}`;
+      return questionText;
+    }
+
+    function showCurrentMobileQuestion(step) {
+      const portraitQuestion = document.getElementById("mobile-portrait-question");
+      const targets = [mobileLandscapeQuestion, portraitQuestion].filter(Boolean);
+      targets.forEach(target => target.replaceChildren());
+
+      // The final answer row intentionally has no clue.
+      if (step >= questions.length - 1 || !questions[step]) return;
+      targets.forEach(target => target.appendChild(createQuestionText(step)));
+    }
 
     // ===== Wordle-style feedback helper =====
     function setCellLetter(cell, value) {
@@ -698,6 +756,8 @@
 
         // Only celebrate on correct; silent on wrong
         if (isCorrect) {
+          document.body.classList.add("puzzle-complete");
+          showCurrentMobileQuestion(correctAnswers.length - 1);
           gameOverDiv.innerHTML = `
             <div>🎉 You cracked the code!</div>
             <div id="share-controls" class="share-controls" hidden></div>
@@ -834,9 +894,7 @@
           const questionContainer = document.createElement("div");
           questionContainer.className = "question-container";
 
-          const questionText = document.createElement("div");
-          questionText.className = "question-text";
-          questionText.textContent = `${step + 1}. ${questions[step]}`;
+          const questionText = createQuestionText(step);
           questionContainer.appendChild(questionText);
 
           const resultSpan = document.createElement("div");
@@ -849,6 +907,12 @@
 
         // Label before final code row (shown above final inputs)
         if (step === correctAnswers.length - 1) {
+          const portraitQuestion = document.createElement("div");
+          portraitQuestion.className = "mobile-current-question";
+          portraitQuestion.id = "mobile-portrait-question";
+          portraitQuestion.setAttribute("aria-live", "polite");
+          guessContainer.appendChild(portraitQuestion);
+
           const label = document.createElement("div");
           label.className = "code-word-label";
           
@@ -893,6 +957,8 @@
           input.autocomplete = "off";
           input.spellcheck = false;
           input.setAttribute("aria-label", `Row ${step + 1}, letter ${i + 1}`);
+
+          input.addEventListener("focus", () => showCurrentMobileQuestion(step));
 
           input.addEventListener("input", (e) => {
             setCellLetter(input, e.target.value);
@@ -983,6 +1049,8 @@
 
         guessContainer.appendChild(rowDiv);
       }
+
+      showCurrentMobileQuestion(0);
     }
 
     // ===== Menu wiring =====
@@ -1170,6 +1238,8 @@
       if (!isStartScreenVisible()) return;
       startScreen.style.display = "none";
       gameOverDiv.textContent = "";
+      document.body.classList.remove("puzzle-complete");
+      document.body.classList.toggle("mobile-device", isMobileDevice());
       renderQuestion();
       // Count this day's attempt when the player starts the puzzle
       incrementStreakForToday();
