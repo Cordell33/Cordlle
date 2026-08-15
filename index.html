@@ -121,6 +121,34 @@
     .cell.gray { background: #B0B0B0; color: #000; border-color: #B0B0B0; }
 
     #game-over { margin-top: 1rem; font-size: 1.2rem; text-align: center; min-height: 2rem; }
+    /* ===== Results sharing ===== */
+    .share-controls {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 0.6rem;
+      margin-top: 0.85rem;
+    }
+    .share-button {
+      padding: 0.5rem 0.9rem;
+      border: 2px solid goldenrod;
+      border-radius: 999px;
+      background: white;
+      color: #8f6a00;
+      font: inherit;
+      font-size: 0.95rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background 0.2s ease, color 0.2s ease, transform 0.2s ease;
+    }
+    .share-button:hover {
+      background: #fff4cc;
+      transform: translateY(-1px);
+    }
+    .share-button:focus-visible {
+      outline: 3px solid #007acc;
+      outline-offset: 2px;
+    }
     .other-games { margin-top: 1rem; color: goldenrod; font-weight: bold; }
     .other-games a { display: block; margin-top: 0.35rem; color: #00bcd4; font-weight: 700; text-decoration: none; }
     .other-games a:hover { text-decoration: underline; color: #ff9800; }
@@ -432,6 +460,15 @@
     body.dark-mode .code-word-label-hint {
       color: #ffd700;
     }
+    body.dark-mode .share-button {
+      background: #1f1f1f;
+      border-color: #ffd700;
+      color: #ffd700;
+    }
+    body.dark-mode .share-button:hover {
+      background: #3a3216;
+      color: #fff4b0;
+    }
 
     @media (max-width: 768px) {
       #menu-toggle {
@@ -542,6 +579,8 @@
 
   <script>
     // ===== Game data (pyramid style) =====
+    const puzzleLabel = "August 2026";
+
     const questions = [
       "The letter accompanying X in the shorthand for hugs and kisses",
       "An '__-then statement' is a conditional used in logic and coding",
@@ -568,6 +607,7 @@
 
     const pyramid = [1,2,3,4,5,6,7,8,9];
     const code    = correctAnswers[8];
+    const questionFeedback = [];
 
     const questionsDiv   = document.getElementById("questions");
     const guessContainer = document.getElementById("guess-container");
@@ -628,6 +668,7 @@
         }
 
         const feedback = getFeedback(inputArr, code);
+        questionFeedback[step] = feedback;
         const inputs   = row.querySelectorAll(".cell");
         inputs.forEach((input, i) => {
           input.classList.add(feedback[i]);
@@ -658,7 +699,8 @@
         // Only celebrate on correct; silent on wrong
         if (isCorrect) {
           gameOverDiv.innerHTML = `
-            🎉 You cracked the code!
+            <div>🎉 You cracked the code!</div>
+            <div id="share-controls" class="share-controls" hidden></div>
             <div class="other-games">
               <div>Try other games:</div>
               <a href="https://cordell33.github.io/GodlePuzzle/" target="_blank" rel="noopener noreferrer">Godle</a>
@@ -668,14 +710,123 @@
               </div>
             </div>
           `;
+          showShareControls();
         }
       }
+    }
+
+    // ===== Results sharing =====
+    function getGameUrl() {
+      return `${window.location.origin}${window.location.pathname}`;
+    }
+
+    function formatRowNumber(number) {
+      return String(number)
+        .split("")
+        .map(digit => `${digit}\uFE0F\u20E3`)
+        .join("");
+    }
+
+    function buildShareText() {
+      const feedbackEmoji = {
+        green: "🟩",
+        yellow: "🟡",
+        gray: "⬜"
+      };
+      const rows = questionFeedback.flatMap((feedback, index) => {
+        if (!feedback) return [];
+        const pattern = feedback.map(color => feedbackEmoji[color]).join("");
+        return [`${formatRowNumber(index + 1)} ${pattern}`];
+      });
+
+      return [
+        `CORDLLE — ${puzzleLabel}`,
+        "",
+        ...rows,
+        "",
+        "🎉 Code cracked!",
+        "",
+        `Play CORDLLE: ${getGameUrl()}`
+      ].join("\n");
+    }
+
+    function fallbackCopyText(text) {
+      const textArea = document.createElement("textarea");
+      textArea.value = text;
+      textArea.setAttribute("readonly", "");
+      textArea.style.position = "fixed";
+      textArea.style.opacity = "0";
+      document.body.appendChild(textArea);
+      textArea.select();
+      const copied = document.execCommand("copy");
+      textArea.remove();
+      return copied;
+    }
+
+    async function writeResultsToClipboard() {
+      const text = buildShareText();
+      if (navigator.clipboard && typeof navigator.clipboard.writeText === "function") {
+        try {
+          await navigator.clipboard.writeText(text);
+          return;
+        } catch (error) {
+          // Fall through for browsers that expose the API but deny access.
+        }
+      }
+      if (!fallbackCopyText(text)) throw new Error("Clipboard copy was unavailable");
+    }
+
+    async function copyResults() {
+      const button = document.getElementById("copy-results-button");
+      try {
+        await writeResultsToClipboard();
+        if (button) button.textContent = "✓ Copied!";
+      } catch (error) {
+        if (button) button.textContent = "Copy failed";
+      }
+      window.setTimeout(() => {
+        if (button) button.textContent = "Copy Results";
+      }, 2000);
+    }
+
+    function shareToX() {
+      const shareUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(buildShareText())}`;
+      window.open(shareUrl, "_blank", "noopener,noreferrer");
+    }
+
+    function shareToFacebook() {
+      const shareUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(getGameUrl())}`;
+      window.open(shareUrl, "_blank", "noopener,noreferrer");
+      writeResultsToClipboard().catch(() => {});
+    }
+
+    function showShareControls() {
+      const controls = document.getElementById("share-controls");
+      if (!controls) return;
+
+      const services = [
+        { id: "copy-results-button", label: "Copy Results", handler: copyResults },
+        { id: "share-facebook-button", label: "Share on Facebook", handler: shareToFacebook },
+        { id: "share-x-button", label: "Share on X", handler: shareToX }
+      ];
+      controls.replaceChildren();
+      services.forEach(service => {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.id = service.id;
+        button.className = "share-button";
+        button.textContent = service.label;
+        button.addEventListener("click", service.handler);
+        controls.appendChild(button);
+      });
+      controls.hidden = false;
     }
 
     // ===== Render pyramid + questions =====
     function renderQuestion() {
       questionsDiv.innerHTML   = "";
       guessContainer.innerHTML = "";
+      questionFeedback.length = 0;
 
       for (let step = 0; step < pyramid.length; step++) {
         // Question text for rows 0..7
