@@ -510,10 +510,28 @@
     }
 
     @media (orientation: landscape) {
+      body.mobile-device:not(.puzzle-complete) {
+        padding-left: 1rem;
+        padding-right: 1rem;
+      }
+
+      body.mobile-device:not(.puzzle-complete) .game-area {
+        justify-content: flex-start;
+        width: auto;
+      }
+
+      body.mobile-device:not(.puzzle-complete) .row {
+        position: relative;
+      }
+
       body.mobile-device:not(.puzzle-complete) #mobile-landscape-question {
         display: flex;
         flex-direction: column;
-        width: min(19rem, 42vw);
+        position: absolute;
+        left: calc(100% + 0.75rem);
+        top: 50%;
+        width: min(19rem, 40vw);
+        transform: translateY(-50%);
       }
     }
 
@@ -526,8 +544,8 @@
 
       body.mobile-device:not(.puzzle-complete) #mobile-portrait-question:not(:empty) {
         display: flex;
-        width: 100%;
-        margin-top: 0.75rem;
+        width: min(19rem, calc(100% - 1rem));
+        margin: -0.35rem auto 0.75rem;
       }
     }
 
@@ -609,6 +627,7 @@
   </div>
 
   <h1>CORDLLE </h1>
+  <div class="mobile-current-question" id="mobile-portrait-question" aria-live="polite"></div>
   <div class="game-area">
     <div class="questions" id="questions"></div>
     <div class="mobile-current-question" id="mobile-landscape-question" aria-live="polite"></div>
@@ -667,6 +686,11 @@
       const portraitQuestion = document.getElementById("mobile-portrait-question");
       const targets = [mobileLandscapeQuestion, portraitQuestion].filter(Boolean);
       targets.forEach(target => target.replaceChildren());
+
+      const focusedRow = document.getElementById(`row-${step}`);
+      if (focusedRow && mobileLandscapeQuestion.parentElement !== focusedRow) {
+        focusedRow.appendChild(mobileLandscapeQuestion);
+      }
 
       // The final answer row intentionally has no clue.
       if (step >= questions.length - 1 || !questions[step]) return;
@@ -907,12 +931,6 @@
 
         // Label before final code row (shown above final inputs)
         if (step === correctAnswers.length - 1) {
-          const portraitQuestion = document.createElement("div");
-          portraitQuestion.className = "mobile-current-question";
-          portraitQuestion.id = "mobile-portrait-question";
-          portraitQuestion.setAttribute("aria-live", "polite");
-          guessContainer.appendChild(portraitQuestion);
-
           const label = document.createElement("div");
           label.className = "code-word-label";
           
