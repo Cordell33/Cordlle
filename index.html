@@ -473,7 +473,8 @@
       color: #fff4b0;
     }
 
-    @media (max-width: 768px) {
+    /* Keep tablet-sized screens on the standard desktop presentation. */
+    @media (max-width: 599px) {
       #menu-toggle {
         left: auto;
         right: 1rem;
@@ -1265,8 +1266,8 @@
 
     function isMobileDevice() {
       const hasTouch = navigator.maxTouchPoints > 0 || "ontouchstart" in window;
-      const mobileViewport = Math.min(window.innerWidth, window.innerHeight) <= 768;
-      return hasTouch && mobileViewport;
+      const phoneSizedViewport = Math.min(window.innerWidth, window.innerHeight) < 600;
+      return hasTouch && phoneSizedViewport;
     }
 
     function isLandscape() {
