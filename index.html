@@ -215,6 +215,11 @@
       line-height: 1.55;
       font-family: "Segoe UI", Arial, sans-serif;
     }
+    .instructions-list ul {
+      margin: 0.25rem 0 0.35rem;
+      padding-left: 1.35rem;
+      list-style-type: disc;
+    }
     .mobile-landscape-note {
       display: none;
       margin: 1rem 0 0;
@@ -613,11 +618,15 @@
   <div id="start-screen">
     <div class="instructions-card">
       <h1>Welcome to CORDLLE</h1>
-      <p class="instructions-subtitle">A logic-and-math word challenge inspired by Gödle rules.</p>
+      <p class="instructions-subtitle">A logic-and-vocabulary word challenge inspired by Gödle rules.</p>
       <ul class="instructions-list">
         <li>Answer each clue correctly to build toward the final code word.</li>
-        <li>Green = correct letter in the correct position.</li>
-        <li>Yellow = correct letter in the wrong position.</li>
+        <li>Once entered:
+          <ul>
+            <li>Green = correct letter in the correct position.</li>
+            <li>Yellow = correct letter in the wrong position.</li>
+          </ul>
+        </li>
         <li>Use logic, track patterns, and have fun.</li>
         <li>Share it with your friends and compare results.</li>
         <li><em>New puzzle on the 15th of every month</em></li>
@@ -639,8 +648,6 @@
 
   <script>
     // ===== Game data (pyramid style) =====
-    const puzzleLabel = "August 15, 2026";
-
     const questions = [
       "The letter accompanying X in the shorthand for hugs and kisses",
       "An '__-then statement' is a conditional used in logic and coding",
@@ -825,7 +832,7 @@
       });
 
       return [
-        `CORDLLE — ${puzzleLabel}`,
+        `CORDLLE — ${formatShareDate()}`,
         "",
         ...rows,
         "",
@@ -833,6 +840,14 @@
         "",
         `Play CORDLLE: ${getGameUrl()}`
       ].join("\n");
+    }
+
+    function formatShareDate(date = new Date()) {
+      return new Intl.DateTimeFormat("en-US", {
+        month: "long",
+        day: "numeric",
+        year: "numeric"
+      }).format(date);
     }
 
     function fallbackCopyText(text) {
