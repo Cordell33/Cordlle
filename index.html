@@ -81,6 +81,27 @@
       user-select: none;
     }
     .row.shake { animation: shake 0.3s; }
+    .row-submit {
+      min-width: 2.4rem;
+      height: 40px;
+      margin-left: 0.2rem;
+      padding: 0 0.65rem;
+      border: 2px solid #8f6a00;
+      border-radius: 8px;
+      background: #fff;
+      color: #735600;
+      font: inherit;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .row-submit:disabled {
+      cursor: default;
+      opacity: 0.4;
+    }
+    .row-submit:focus-visible {
+      outline: 3px solid #007acc;
+      outline-offset: 2px;
+    }
     @keyframes shake {
       0%{transform:translateX(0)}
       25%{transform:translateX(-5px)}
@@ -477,6 +498,11 @@
     }
     body.dark-mode .cell.green { background:#2e7d32; border-color:#2e7d32; color:#fff; }
     body.dark-mode .row-number { color:#d3b24f; }
+    body.dark-mode .row-submit {
+      background: #1f1f1f;
+      border-color: #ffd700;
+      color: #ffd700;
+    }
     body.dark-mode #start-screen { background:#121212; color:#ffd700; }
     body.dark-mode .instructions-card {
       background: linear-gradient(145deg, #1b1b1b, #222222);
@@ -799,6 +825,7 @@
     function evaluate(inputArr, step) {
       const row    = document.getElementById(`row-${step}`);
       const result = document.getElementById(`result-${step}`);
+      const submitButton = row.querySelector(".row-submit");
 
       if (step < correctAnswers.length - 1) {
         // Question rows
@@ -825,6 +852,7 @@
           input.classList.add(feedback[i]);
           input.disabled = true;
         });
+        submitButton.disabled = true;
 
         // Move focus to first cell of next row, if any
         const nextRow = document.getElementById(`row-${step + 1}`);
@@ -842,6 +870,7 @@
           input.classList.add(feedback[i]);
           input.disabled = true;
         });
+        submitButton.disabled = true;
 
         const isCorrect =
           inputArr.length === code.length &&
@@ -1042,7 +1071,7 @@
           guessContainer.appendChild(label);
         }
 
-        const rowDiv = document.createElement("div");
+        const rowDiv = document.createElement("form");
         rowDiv.className = "row";
         rowDiv.style.justifyContent = "flex-start";
         rowDiv.id = `row-${step}`;
@@ -1068,6 +1097,9 @@
           input.maxLength = 1;
           input.type = "text";
           input.autocomplete = "off";
+          input.autocapitalize = "characters";
+          input.inputMode = "text";
+          input.enterKeyHint = "done";
           input.spellcheck = false;
           input.setAttribute("aria-label", `Row ${step + 1}, letter ${i + 1}`);
 
@@ -1080,6 +1112,7 @@
             if (input.value.length === 1 && index < siblings.length - 1) {
               siblings[index + 1].focus();
             }
+            rowDiv.querySelector(".row-submit").disabled = siblings.some(cell => !cell.value);
           });
 
           input.addEventListener("keydown", (e) => {
@@ -1087,10 +1120,8 @@
             const index = siblings.indexOf(input);
 
             if (e.key === "Enter") {
-              const values = siblings.map(i => i.value.trim().toUpperCase());
-              if (values.every(v => v !== "")) {
-                evaluate(values, step);
-              }
+              e.preventDefault();
+              rowDiv.requestSubmit();
             }
 
             // Horizontal movement
@@ -1159,6 +1190,21 @@
 
           rowDiv.appendChild(input);
         }
+
+        const submitButton = document.createElement("button");
+        submitButton.className = "row-submit";
+        submitButton.type = "submit";
+        submitButton.textContent = "Enter";
+        submitButton.disabled = true;
+        submitButton.setAttribute("aria-label", `Enter row ${step + 1}`);
+        rowDiv.appendChild(submitButton);
+
+        rowDiv.addEventListener("submit", (event) => {
+          event.preventDefault();
+          const cells = Array.from(rowDiv.querySelectorAll(".cell"));
+          const values = cells.map(cell => cell.value.trim().toUpperCase());
+          if (values.every(Boolean)) evaluate(values, step);
+        });
 
         guessContainer.appendChild(rowDiv);
       }
