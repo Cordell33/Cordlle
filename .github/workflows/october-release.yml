@@ -1,0 +1,96 @@
+name: October 2026 puzzle release
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/october-release.yml
+      - .github/scripts/october_release.py
+  workflow_dispatch:
+    inputs:
+      operation:
+        description: Check setup now, or release during October 15 Eastern time
+        type: choice
+        options: [check, release]
+        default: check
+  schedule:
+    # Start ten minutes early, then wait for midnight EDT (04:00 UTC).
+    - cron: '50 3 15 10 *'
+    # Retry safely if GitHub delays or drops the first scheduled run.
+    - cron: '5,15,30 4 15 10 *'
+
+permissions:
+  contents: write
+  pages: write
+
+concurrency:
+  group: october-2026-puzzle-release
+  cancel-in-progress: false
+
+jobs:
+  release:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - name: Check out current main
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          ref: main
+
+      - name: Validate puzzle without changing the live game
+        run: python3 .github/scripts/october_release.py check
+
+      - name: Verify branch-based GitHub Pages configuration
+        run: |
+          gh api "repos/$GITHUB_REPOSITORY/pages" > "$RUNNER_TEMP/pages.json"
+          python3 - "$RUNNER_TEMP/pages.json" <<'PY'
+          import json, sys
+          config = json.load(open(sys.argv[1]))
+          source = config.get('source') or {}
+          if config.get('build_type') != 'legacy' or source.get('branch') != 'main' or source.get('path') != '/':
+              raise SystemExit('Expected GitHub Pages to publish from main / (root); check repository Pages settings')
+          print('GitHub Pages source: main / (root)')
+          PY
+
+      - name: Wait for October 15 midnight Eastern
+        id: timing
+        if: github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && inputs.operation == 'release')
+        run: python3 .github/scripts/october_release.py wait >> "$GITHUB_OUTPUT"
+
+      - name: Apply and push the October puzzle
+        if: steps.timing.outputs.due == 'true'
+        run: |
+          python3 .github/scripts/october_release.py apply
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html
+          if ! git diff --cached --quiet; then
+            git commit -m 'Release October 2026 Cordlle puzzle'
+            git push origin HEAD:main
+          fi
+
+      - name: Request and verify the GitHub Pages build
+        # A GITHUB_TOKEN push does not automatically trigger a Pages build.
+        # Setup checks rebuild the existing game to verify publishing access.
+        if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.operation == 'check') || steps.timing.outputs.due == 'true'
+        run: |
+          gh api --method POST "repos/$GITHUB_REPOSITORY/pages/builds" > "$RUNNER_TEMP/pages-request.json"
+          python3 - <<'PY'
+          import json, os, subprocess, time
+          expected = subprocess.check_output(['git', 'rev-parse', 'HEAD'], text=True).strip()
+          endpoint = 'repos/' + os.environ['GITHUB_REPOSITORY'] + '/pages/builds/latest'
+          for attempt in range(60):
+              build = json.loads(subprocess.check_output(['gh', 'api', endpoint], text=True))
+              if build.get('commit') == expected:
+                  if build.get('status') == 'built':
+                      print('GitHub Pages published commit ' + expected)
+                      break
+                  if build.get('status') == 'errored':
+                      raise SystemExit('GitHub Pages build failed: ' + str(build.get('error')))
+              time.sleep(10)
+          else:
+              raise SystemExit('Timed out waiting for the requested GitHub Pages build; inspect repository Actions and Pages builds')
+          PY
