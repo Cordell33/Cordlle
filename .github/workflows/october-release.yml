@@ -31,7 +31,7 @@ jobs:
   release:
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 45
     env:
       GH_TOKEN: ${{ github.token }}
     steps:
@@ -54,6 +54,15 @@ jobs:
               raise SystemExit('Expected GitHub Pages to publish from main / (root); check repository Pages settings')
           print('GitHub Pages source: main / (root)')
           PY
+
+      - name: Verify scheduled pushes can use main
+        run: |
+          protected=$(gh api "repos/$GITHUB_REPOSITORY/branches/main" --jq '.protected')
+          if [ "$protected" != false ]; then
+            echo 'main has branch protection or rules; confirm a permitted release path before scheduling'
+            exit 1
+          fi
+          echo 'main is unprotected; the workflow has contents: write permission'
 
       - name: Wait for October 15 midnight Eastern
         id: timing
