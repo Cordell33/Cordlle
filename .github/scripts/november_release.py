@@ -1,0 +1,136 @@
+"""Prepare the approved November puzzle without releasing it before midnight."""
+
+import argparse
+from datetime import datetime, timedelta, timezone
+import json
+from pathlib import Path
+import re
+import time
+
+# November 15, 2026 at 12:00 a.m. America/New_York = 05:00 UTC (EST).
+RELEASE_AT = datetime(2026, 11, 15, 5, tzinfo=timezone.utc)
+RELEASE_END = RELEASE_AT + timedelta(days=1)
+
+QUESTIONS = [
+    "The letter paired with X in the shorthand for hugs and kisses",
+    "An '__-then' statement is a conditional used in logic and coding",
+    "Father, but less formal",
+    "Abbreviation for a higher-level math subject, or for a triglycerides blood test",
+    "It's like a slug, but with a shell",
+    "A dairy product made by curdling milk, with varieties such as cheddar, Swiss, and mozzarella",
+    "A place where you go to clean your motor vehicle; sometimes it's automatic",
+    "Often used to carry books and school supplies, typically worn on your back",
+    "",
+]
+
+ANSWERS = [list(answer) for answer in [
+    "O", "IF", "DAD", "TRIG", "SNAIL", "CHEESE", "CARWASH", "BACKPACK", "KNOWLEDGE"
+]]
+
+EXPECTED_CURRENT_QUESTIONS = [
+    "The letter formed by a two-finger gesture associated with victory and peace",
+    "The opposite of the answer to question 4",
+    "An abbreviation for base 16 in math and computer science, or a word for a magical curse",
+    "A road sign that tells drivers to come to a complete halt",
+    "A species or subspecies that is significantly smaller than its counterparts, or the primary term associated with certain central African tribes",
+    "'Rapper's Delight', 'Straight Outta Compton', 'Juicy', and 'Lose Yourself' are examples of this musical genre",
+    "In the cartoon 'Tom and Jerry', what specifically is Spike?",
+    "The capital of the only country that is also a continent",
+    "",
+]
+
+EXPECTED_CURRENT_ANSWERS = [list(answer) for answer in [
+    "V", "GO", "HEX", "STOP", "PYGMY", "HIPHOP", "BULLDOG", "CANBERRA", "YESTERDAY"
+]]
+
+
+def replacement(name, rows):
+    lines = []
+    for index, row in enumerate(rows):
+        suffix = "," if index < len(rows) - 1 else ""
+        if index == len(rows) - 1:
+            suffix += (" // final row has no visible question text" if name == "questions"
+                       else " // final CORDLLE word")
+        lines.append("      " + json.dumps(row, ensure_ascii=False) + suffix)
+    return "    const " + name + " = [\n" + "\n".join(lines) + "\n    ];"
+
+
+def prepare(document):
+    if len(QUESTIONS) != 9 or QUESTIONS[-1] != "":
+        raise ValueError("Expected eight clues and an empty final clue")
+    if [len(row) for row in ANSWERS] != list(range(1, 10)):
+        raise ValueError("Answers must fit the nine pyramid rows")
+
+    expected_rows = {
+        "questions": EXPECTED_CURRENT_QUESTIONS,
+        "correctAnswers": EXPECTED_CURRENT_ANSWERS,
+    }
+    new_rows = {
+        "questions": QUESTIONS,
+        "correctAnswers": ANSWERS,
+    }
+
+    for name in ("questions", "correctAnswers"):
+        pattern = re.compile(r"^    const " + name + r" = \[.*?^    \];", re.M | re.S)
+        matches = list(pattern.finditer(document))
+        if len(matches) != 1:
+            raise ValueError(f"Expected exactly one {name} declaration")
+
+        previous = matches[0].group(0)
+        expected = replacement(name, expected_rows[name])
+        updated = replacement(name, new_rows[name])
+
+        # Be idempotent if the release already happened, but refuse to overwrite
+        # an unexpected puzzle change made after this release was prepared.
+        if previous != updated and previous != expected:
+            raise ValueError(f"{name} changed since preparation; refusing to overwrite it")
+
+        document = pattern.sub(lambda _: updated, document, count=1)
+
+    return document
+
+
+def is_release_window(now):
+    return RELEASE_AT <= now < RELEASE_END
+
+
+def wait_until_release():
+    now = datetime.now(timezone.utc)
+    # A late yearly cron or an accidental early manual run must not publish.
+    if now < RELEASE_AT - timedelta(minutes=20) or now >= RELEASE_END:
+        print("due=false")
+        return
+
+    while now < RELEASE_AT:
+        time.sleep(min(30, (RELEASE_AT - now).total_seconds()))
+        now = datetime.now(timezone.utc)
+
+    print("due=" + str(is_release_window(now)).lower())
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("operation", choices=["check", "apply", "wait"])
+    parser.add_argument("--file", type=Path, default=Path("index.html"))
+    parser.add_argument("--output", type=Path)
+    args = parser.parse_args()
+
+    if args.operation == "wait":
+        wait_until_release()
+        return
+
+    updated = prepare(args.file.read_text())
+
+    if args.operation == "apply":
+        if not is_release_window(datetime.now(timezone.utc)):
+            raise SystemExit("Release is restricted to November 15, 2026, Eastern time")
+        args.file.write_text(updated)
+        print("November puzzle applied")
+    else:
+        if args.output:
+            args.output.write_text(updated)
+        print("Approved November puzzle validated; live index.html unchanged")
+
+
+if __name__ == "__main__":
+    main()
