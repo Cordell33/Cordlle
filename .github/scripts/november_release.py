@@ -12,19 +12,19 @@ RELEASE_AT = datetime(2026, 11, 15, 5, tzinfo=timezone.utc)
 RELEASE_END = RELEASE_AT + timedelta(days=1)
 
 QUESTIONS = [
-    "The letter paired with X in the shorthand for hugs and kisses",
-    "An '__-then' statement is a conditional used in logic and coding",
-    "Father, but less formal",
-    "Abbreviation for a higher-level math subject, or for a triglycerides blood test",
-    "It's like a slug, but with a shell",
-    "A dairy product made by curdling milk, with varieties such as cheddar, Swiss, and mozzarella",
-    "A place where you go to clean your motor vehicle; sometimes it's automatic",
-    "Often used to carry books and school supplies, typically worn on your back",
+    "A toy store whose mascot was a giraffe famously depicted this letter backward in its name",
+    "One of the two states a light or switch can be in",
+    "The other state a light, switch, or device can be in",
+    "A professional, skilled, and trained cook",
+    "Modeled on Florida, this long-anticipated video game is scheduled to release 13 years after its predecessor",
+    "A gender-neutral term for your married significant other",
+    "This portable, battery-powered music player, popular in the '80s, is often associated with hip-hop culture",
+    "Cash, greeting cards, and especially letters are often placed inside this stationery item",
     "",
 ]
 
 ANSWERS = [list(answer) for answer in [
-    "O", "IF", "DAD", "TRIG", "SNAIL", "CHEESE", "CARWASH", "BACKPACK", "KNOWLEDGE"
+    "R", "ON", "OFF", "CHEF", "GTAVI", "SPOUSE", "BOOMBOX", "ENVELOPE", "CHRISTMAS"
 ]]
 
 EXPECTED_CURRENT_QUESTIONS = [
