@@ -12,12 +12,12 @@ RELEASE_AT = datetime(2026, 11, 15, 5, tzinfo=timezone.utc)
 RELEASE_END = RELEASE_AT + timedelta(days=1)
 
 QUESTIONS = [
-    "A toy store whose mascot was a giraffe famously depicted this letter backward in its name",
+    "A toy store whose mascot is a giraffe famously depicted this letter backward in its name",
     "One of the two states a light or switch can be in",
     "The other state a light, switch, or device can be in",
-    "A professional, skilled, and trained cook",
+    "A skilled, professionally trained cook",
     "Modeled on Florida, this long-anticipated video game is scheduled to release 13 years after its predecessor",
-    "A gender-neutral term for your married significant other",
+    "A gender-neutral term for a person you're married to",
     "This portable, battery-powered music player, popular in the '80s, is often associated with hip-hop culture",
     "Cash, greeting cards, and especially letters are often placed inside this stationery item",
     "",
